@@ -85,6 +85,66 @@ CAPTION_STYLES = {
         'font_type': 'bold',
         'name': 'Pink Highlight Box'
     },
+    'hot_pink': {
+        'text_color': (255, 36, 170, 255),
+        'stroke_color': (0, 0, 0, 255),
+        'stroke_ratio': 0.11,
+        'box_color': None,
+        'box_text_color': None,
+        'shadow': True,
+        'font_type': 'impact',
+        'name': 'Hot Pink (outlined)'
+    },
+    'orange_pop': {
+        'text_color': (255, 140, 0, 255),
+        'stroke_color': (0, 0, 0, 255),
+        'stroke_ratio': 0.12,
+        'box_color': None,
+        'box_text_color': None,
+        'shadow': True,
+        'font_type': 'impact',
+        'name': 'Orange Pop (outlined)'
+    },
+    'mint_green': {
+        'text_color': (0, 230, 180, 255),
+        'stroke_color': (0, 0, 0, 255),
+        'stroke_ratio': 0.11,
+        'box_color': None,
+        'box_text_color': None,
+        'shadow': True,
+        'font_type': 'bolditalic',
+        'name': 'Mint Green (italic)'
+    },
+    'white_box': {
+        'text_color': (255, 255, 255, 255),
+        'stroke_color': None,
+        'stroke_ratio': 0.0,
+        'box_color': (0, 0, 0, 210),
+        'box_text_color': (255, 255, 255, 255),
+        'shadow': False,
+        'font_type': 'bold',
+        'name': 'White on Black Box'
+    },
+    'blue_box': {
+        'text_color': (255, 255, 255, 255),
+        'stroke_color': None,
+        'stroke_ratio': 0.0,
+        'box_color': (33, 150, 243, 255),
+        'box_text_color': (255, 255, 255, 255),
+        'shadow': True,
+        'font_type': 'bold',
+        'name': 'Blue Highlight Box'
+    },
+    'red_box': {
+        'text_color': (255, 255, 255, 255),
+        'stroke_color': None,
+        'stroke_ratio': 0.0,
+        'box_color': (229, 57, 53, 255),
+        'box_text_color': (255, 255, 255, 255),
+        'shadow': True,
+        'font_type': 'bold',
+        'name': 'Red Highlight Box'
+    },
     'clean_white': {
         'text_color': (255, 255, 255, 255),
         'stroke_color': (0, 0, 0, 200),
