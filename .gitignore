@@ -136,3 +136,5 @@ temp_files/
 *.mp4
 *.m4a
 *.txt
+# ...but the dependency manifest must be tracked
+!requirements.txt

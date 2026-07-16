@@ -1,0 +1,36 @@
+# YouTube Viral Clipper — Python dependencies
+# Generated from the actual imports used across the codebase.
+# Install with:  pip install -r requirements.txt
+#
+# System prerequisite (NOT installable via pip): ffmpeg must be available on
+# your PATH for video encoding. Install it separately:
+#   macOS:   brew install ffmpeg
+#   Ubuntu:  sudo apt install ffmpeg
+#   Windows: https://ffmpeg.org/download.html
+
+# --- AI clip selection (Google Gemini) ---
+google-generativeai>=0.7.0
+
+# --- Configuration ---
+python-dotenv>=1.0.0
+
+# --- YouTube download (primary + fallback) ---
+pytubefix>=6.0.0
+yt-dlp>=2024.4.9
+
+# --- Speech-to-text transcription ---
+faster-whisper>=1.0.0
+torch>=2.0.0
+
+# --- Video editing / encoding ---
+# NOTE: the code imports `moviepy.editor`, which was REMOVED in MoviePy 2.0.
+# Must stay on the 1.x line.
+moviepy>=1.0.3,<2.0.0
+
+# --- Face tracking & image processing ---
+opencv-python>=4.8.0
+mediapipe>=0.10.9
+Pillow>=10.0.0
+
+# --- Numerical (pinned <2 for opencv/mediapipe compatibility) ---
+numpy>=1.24.0,<2.0.0
