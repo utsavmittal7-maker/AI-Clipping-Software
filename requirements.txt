@@ -29,7 +29,9 @@ moviepy>=1.0.3,<2.0.0
 
 # --- Face tracking & image processing ---
 opencv-python>=4.8.0
-mediapipe>=0.10.9
+# Pin below 0.10.15: newer mediapipe (e.g. 0.10.35) dropped the legacy
+# `mp.solutions.face_detection` API that services/face_tracker.py relies on.
+mediapipe>=0.10.9,<0.10.15
 Pillow>=10.0.0
 
 # --- Numerical (pinned <2 for opencv/mediapipe compatibility) ---
