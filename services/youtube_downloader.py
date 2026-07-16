@@ -113,58 +113,52 @@ class YouTubeDownloader:
             print(f"Video duration: {duration} seconds ({duration//60}m {duration%60}s)")
             print(f"Video author: {yt.author}")
             print(f"⏳ Selecting best quality stream...")
-            
-            # First try to get progressive stream (combined audio and video)
-            stream = (
-                yt.streams
-                .filter(progressive=True, file_extension='mp4')
-                .order_by('resolution')
-                .desc()
-                .first()
-            )
-            
-            # If no suitable progressive stream is found, try adaptive stream
-            if not stream:
-                print("⚠️ No progressive stream found, trying adaptive stream")
+
+            # Prefer a high-resolution adaptive video (up to 1080p) merged with
+            # the best audio track. This is what makes the final clips sharp -
+            # progressive streams alone are usually capped at 720p (often 360p).
+            video_path = self._download_high_quality(yt, output_path, video_id)
+
+            if not video_path:
+                # Fallback: a single progressive (video+audio) mp4 file.
+                print("⚠️ Falling back to a progressive stream (lower resolution).")
                 stream = (
                     yt.streams
-                    .filter(file_extension='mp4')
+                    .filter(progressive=True, file_extension='mp4')
                     .order_by('resolution')
                     .desc()
                     .first()
                 )
-            
-            if not stream:
-                raise ValueError("No suitable video stream found")
-            
-            print(f"Selected stream: {stream.resolution}, {stream.mime_type}")
-            print(f"Stream itag: {stream.itag}, File size: {stream.filesize/(1024*1024):.1f} MB")
-            print(f"⏳ Starting download (this may take a while)...")
-            
-            # Download the video with error handling
-            try:
+                if not stream:
+                    print("⚠️ No progressive stream found, trying any mp4 stream")
+                    stream = (
+                        yt.streams
+                        .filter(file_extension='mp4')
+                        .order_by('resolution')
+                        .desc()
+                        .first()
+                    )
+                if not stream:
+                    raise ValueError("No suitable video stream found")
+
+                print(f"Selected stream: {stream.resolution}, {stream.mime_type}")
                 print(f"⏳ Downloading video to {output_path}...")
-                video_path = stream.download(output_path=output_path, filename=output_filename)
-                
-                # Verify the file exists and has content
-                if not os.path.exists(video_path) or os.path.getsize(video_path) == 0:
-                    raise FileNotFoundError(f"Downloaded file is missing or empty: {video_path}")
-                
-                file_size_mb = os.path.getsize(video_path) / (1024 * 1024)
-                print(f"✅ Download complete! File size: {file_size_mb:.2f} MB")
-                    
-                # Convert to Path object for consistency with the rest of the code
-                video_path = Path(video_path)
-                print(f"Download complete: {video_path}")
-            except OSError as e:
-                # Handle specific OS errors like invalid characters in filename
-                print(f"OS Error during download: {e}")
-                # Create a temporary file with a safe name
-                temp_file = os.path.join(output_path, f"youtube_video_{video_id}.mp4")
-                video_path = stream.download(output_path=output_path, filename=f"youtube_video_{video_id}.mp4")
-                video_path = Path(video_path)
-                print(f"Download complete with safe filename: {video_path}")
-            
+                try:
+                    video_path = stream.download(output_path=output_path, filename=output_filename)
+                except OSError as e:
+                    print(f"OS Error during download: {e}")
+                    video_path = stream.download(output_path=output_path, filename=f"youtube_video_{video_id}.mp4")
+
+            # Verify the file exists and has content
+            if not os.path.exists(video_path) or os.path.getsize(video_path) == 0:
+                raise FileNotFoundError(f"Downloaded file is missing or empty: {video_path}")
+
+            file_size_mb = os.path.getsize(video_path) / (1024 * 1024)
+            print(f"✅ Download complete! File size: {file_size_mb:.2f} MB")
+
+            video_path = Path(video_path)
+            print(f"Download complete: {video_path}")
+
             return video_path, title, duration
             
         except PytubeFixError as e:
@@ -180,3 +174,80 @@ class YouTubeDownloader:
             raise FileNotFoundError("Failed to download the video file.")
 
         return video_path, "Unknown Title", 0
+
+    def _download_high_quality(self, yt, output_path, video_id):
+        """
+        Download the best adaptive video (up to 1080p) plus the best audio
+        track and merge them with ffmpeg.
+
+        Returns the merged file path on success, or None if a high-quality
+        download/merge isn't possible (the caller then falls back to a
+        progressive stream).
+        """
+        import shutil
+        import subprocess
+
+        if not shutil.which('ffmpeg'):
+            print("⚠️ ffmpeg not on PATH - skipping high-quality merge.")
+            return None
+
+        def _res(stream):
+            try:
+                return int((stream.resolution or '0p').rstrip('p'))
+            except (ValueError, AttributeError):
+                return 0
+
+        try:
+            video_streams = [
+                s for s in yt.streams.filter(
+                    adaptive=True, only_video=True, file_extension='mp4')
+                if 0 < _res(s) <= 1080
+            ]
+            if not video_streams:
+                return None
+            video_stream = max(video_streams, key=_res)
+
+            audio_stream = (
+                yt.streams.filter(only_audio=True).order_by('abr').desc().first()
+            )
+            if not audio_stream:
+                return None
+
+            print(f"🎬 Best quality: {video_stream.resolution} video + "
+                  f"{getattr(audio_stream, 'abr', '?')} audio (will be merged)")
+
+            v_tmp = os.path.join(output_path, f"{video_id}_video.mp4")
+            a_tmp = os.path.join(output_path, f"{video_id}_audio.mp4")
+            print("⏳ Downloading video track...")
+            video_stream.download(output_path=output_path,
+                                  filename=f"{video_id}_video.mp4")
+            print("⏳ Downloading audio track...")
+            audio_stream.download(output_path=output_path,
+                                  filename=f"{video_id}_audio.mp4")
+
+            merged = os.path.join(output_path, f"{video_id}.mp4")
+            print("⏳ Merging video + audio with ffmpeg...")
+            result = subprocess.run(
+                ['ffmpeg', '-y', '-i', v_tmp, '-i', a_tmp,
+                 '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k',
+                 '-movflags', '+faststart', '-shortest', merged],
+                capture_output=True, text=True
+            )
+
+            for tmp in (v_tmp, a_tmp):
+                try:
+                    if os.path.exists(tmp):
+                        os.remove(tmp)
+                except OSError:
+                    pass
+
+            if (result.returncode != 0 or not os.path.exists(merged)
+                    or os.path.getsize(merged) == 0):
+                tail = (result.stderr or '')[-300:]
+                print(f"⚠️ ffmpeg merge failed, will fall back. {tail}")
+                return None
+
+            return merged
+        except Exception as e:
+            print(f"⚠️ High-quality download failed ({e}); will fall back.")
+            return None
