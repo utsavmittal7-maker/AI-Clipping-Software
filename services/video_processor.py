@@ -48,6 +48,7 @@ class VideoProcessor:
         """
         print("📥 Downloading video...")
         video_path, title, duration = self.downloader.download(url)
+        author = getattr(self.downloader, 'video_author', '')
         print(f"✅ Download complete: {title} ({duration:.1f}s)")
 
         print("🎵 Starting transcription with Whisper...")
@@ -62,7 +63,8 @@ class VideoProcessor:
         else:
             print("🧠 Using AI to select the most viral clips...")
             clip_specs = self.ai_selector.select_clips(
-                segments, duration, num_clips, min_duration, max_duration
+                segments, duration, num_clips, min_duration, max_duration,
+                video_title=title, video_author=author
             )
             print(f"✅ AI selected {len(clip_specs)} viral clips")
 
@@ -120,6 +122,18 @@ class VideoProcessor:
                     print(f"    ✅ Video encoding complete")
                     output_files.append(str(output_path))
                     print(f"    ✅ Saved: {filename}")
+
+                    # Save the catchy, streamer-aware description next to the clip
+                    description = clip_info.get('description', '').strip()
+                    if description:
+                        desc_path = OUTPUT_DIR / f"{output_path.stem}_description.txt"
+                        try:
+                            with open(desc_path, 'w', encoding='utf-8') as fh:
+                                fh.write(description + "\n")
+                            print(f"    📝 Description: {description}")
+                            print(f"    💾 Saved caption to: {desc_path.name}")
+                        except Exception as write_err:
+                            print(f"    ⚠️ Could not save description: {write_err}")
 
             except Exception as e:
                 print(f"    ❌ Error processing clip {i}: {e}")
