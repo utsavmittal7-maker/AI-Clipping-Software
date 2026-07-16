@@ -65,11 +65,18 @@ SELECTION CRITERIA (prioritize):
 - Quotable one-liners with context
 - Question-answer pairs
 
-For EACH clip also write a "description" - a caption for TikTok / Instagram Reels / YouTube Shorts:
-- Voice: Gen-Z, punchy, playful, high-energy. Sound like a fan edit, not a press release.
+For EACH clip write BOTH a "title" and a "description" for TikTok / Instagram Reels / YouTube Shorts:
+
+TITLE:
+- A short, punchy hook (max ~8 words) that makes people want to watch.
+- Include 1-2 fitting emojis in the title.
+
+DESCRIPTION:
+- Tell a BRIEF STORY (2-4 sentences): set the scene, build a little tension, then tease the payoff WITHOUT fully spoiling it. It should read like a fan hyping up the moment.
+- Voice: Gen-Z, punchy, playful, high-energy. Sprinkle fitting emojis throughout (not just at the end).
 - Identify the streamer(s) actually featured and name them. Use the ORIGINAL VIDEO TITLE and CHANNEL below as the source of truth for names/handles.
 - ACCURACY IS CRITICAL: never invent or guess a streamer's name. If you are not sure who is speaking, say "this streamer" instead of guessing a wrong name.
-- Keep it to 1-2 short sentences, add a few fitting emojis, and end with 3-5 relevant hashtags (include the streamer name as a hashtag when known, plus tags like #shorts #fyp #viral #twitch).
+- End with 3-5 relevant hashtags (include the streamer name as a hashtag when known, plus tags like #shorts #fyp #viral #twitch).
 
 {source_context}
 VIDEO DURATION: {video_duration} seconds
@@ -83,11 +90,11 @@ Return ONLY valid JSON with EXACT timestamps from the transcript:
     {{
       "start": 34.5,
       "end": 67.2,
-      "title": "Complete thought or hook",
+      "title": "He did NOT just say that 💀🔥",
       "virality_score": 85,
       "hook_type": "story_reveal",
       "reason": "Complete engaging story with clear beginning and end",
-      "description": "Bro really said that on stream 💀🔥 @streamer went crazy #streamer #shorts #fyp #twitch"
+      "description": "Okay so picture this 👀 the lobby is dead quiet and everyone's locked in... then out of NOWHERE this streamer drops the wildest take of the stream 😭 chat completely lost it and honestly same 💀 you NEED to see how it ends 🔥 #streamer #shorts #fyp #twitch"
     }}
   ]
 }}"""
@@ -198,7 +205,7 @@ TRANSCRIPT:
             clips.append({
                 'start': start,
                 'end': start + duration,
-                'title': f'Fallback clip {len(clips) + 1}',
+                'title': f'🔥 Wild stream moment {len(clips) + 1} 😳',
                 'virality_score': 50,
                 'hook_type': 'general',
                 'duration': duration,

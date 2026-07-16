@@ -185,17 +185,19 @@ class VideoProcessor:
                     output_files.append(str(output_path))
                     print(f"    ✅ Saved: {filename}")
 
-                    # Save the catchy, streamer-aware description next to the clip
+                    # Save the title + catchy story description together in one file.
                     description = clip_info.get('description', '').strip()
-                    if description:
-                        desc_path = OUTPUT_DIR / f"{output_path.stem}_description.txt"
-                        try:
-                            with open(desc_path, 'w', encoding='utf-8') as fh:
-                                fh.write(description + "\n")
+                    desc_path = OUTPUT_DIR / f"{output_path.stem}_description.txt"
+                    try:
+                        with open(desc_path, 'w', encoding='utf-8') as fh:
+                            fh.write(f"🎬 TITLE:\n{title_text}\n\n")
+                            fh.write(f"📝 DESCRIPTION:\n{description}\n")
+                        print(f"    🎬 Title: {title_text}")
+                        if description:
                             print(f"    📝 Description: {description}")
-                            print(f"    💾 Saved caption to: {desc_path.name}")
-                        except Exception as write_err:
-                            print(f"    ⚠️ Could not save description: {write_err}")
+                        print(f"    💾 Saved title + description to: {desc_path.name}")
+                    except Exception as write_err:
+                        print(f"    ⚠️ Could not save title/description: {write_err}")
 
             except Exception as e:
                 print(f"    ❌ Error processing clip {i}: {e}")
