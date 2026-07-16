@@ -105,10 +105,11 @@ class VideoProcessor:
                         str(output_path),
                         codec='libx264',
                         audio_codec='aac',
-                        # Use 'faster' preset for better performance with minimal quality loss
-                        preset='faster',
-                        # Use slightly higher CRF (20) for better compression with minimal quality loss
-                        ffmpeg_params=['-crf', '20', '-pix_fmt', 'yuv420p', '-threads', '2'],
+                        audio_bitrate='192k',
+                        # 'medium' preset + CRF 18 gives noticeably crisper clips
+                        # than the old 'faster'/CRF 20 for a small speed cost.
+                        preset='medium',
+                        ffmpeg_params=['-crf', '18', '-pix_fmt', 'yuv420p', '-threads', '2'],
                         verbose=True,  # Enable verbose output to show progress
                         logger=None,
                         temp_audiofile=str(TEMP_DIR / f'temp_audio_{i}.m4a'),
