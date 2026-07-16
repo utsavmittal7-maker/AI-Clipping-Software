@@ -102,6 +102,10 @@ def main(url=None):
             selected_style = 'clean_white'
             log("⚠️  Invalid input, using default: Clean White")
 
+        review_choice = input(
+            "✂️  Review & trim clips before rendering? (y/N): ").strip().lower()
+        review = review_choice in ('y', 'yes')
+
         log("\n" + "="*70)
         log("🎬 STARTING VIDEO PROCESSING...")
         log("="*70)
@@ -109,11 +113,12 @@ def main(url=None):
         log("⏳ Initializing video processor...")
         processor = VideoProcessor(caption_style=selected_style)
         log("✅ Video processor initialized")
-        
+
         # Add a small delay to ensure logs are displayed
         time.sleep(0.5)
-        
-        outputs, title = processor.process_video(url, num_clips, min_duration, max_duration)
+
+        outputs, title = processor.process_video(
+            url, num_clips, min_duration, max_duration, review=review)
 
         log("\n" + "="*70)
         log("🎉 VIRAL CLIPS GENERATED!")

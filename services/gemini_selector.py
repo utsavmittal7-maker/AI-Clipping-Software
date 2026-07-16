@@ -147,6 +147,30 @@ Return ONLY valid JSON with EXACT timestamps from the transcript:
         base = (video_title or clip_title or 'Wild stream moment').strip()
         return f"🔥 {base} 😳 you had to be there 👀 #shorts #fyp #viral #twitch #clips"
 
+    def summarize(self, segments, video_title=""):
+        """Return a short plain-text summary of the whole video, or ''."""
+        if not segments:
+            return ""
+        transcript = " ".join(s.get('text', '') for s in segments)[:12000]
+        prompt = f"""Summarize this video for someone deciding whether to watch it.
+
+Write:
+1) A 2-3 sentence overview.
+2) Then 3-5 short bullet points of the key moments.
+
+Keep it clear and engaging. Return plain text only (no markdown headers).
+
+VIDEO TITLE: {video_title or 'unknown'}
+TRANSCRIPT:
+{transcript}"""
+        try:
+            print("📝 Generating video summary...")
+            response = self.model.generate_content(prompt)
+            return (response.text or "").strip()
+        except Exception as e:
+            print(f"⚠️ Could not generate summary: {e}")
+            return ""
+
     def _fallback_selection(self, segments, video_duration, n, min_dur, max_dur,
                             video_title=""):
         # Start each fallback clip at a real segment boundary (so it begins on a
