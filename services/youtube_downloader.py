@@ -57,16 +57,38 @@ class YouTubeDownloader:
         """
         Extracts the video ID from a YouTube URL.
 
+        Handles all common forms:
+          - youtube.com/watch?v=ID
+          - youtu.be/ID
+          - youtube.com/live/ID   (live streams / their VODs)
+          - youtube.com/shorts/ID
+          - youtube.com/embed/ID
+          - youtube.com/v/ID
+
         Args:
             url (str): The YouTube URL.
 
         Returns:
             str: The video ID, or None if not found.
         """
-        if 'youtu.be' in url:
-            return url.split('/')[-1].split('?')[0]
-        if 'youtube.com' in url:
-            return parse_qs(urlparse(url).query).get('v', [None])[0]
+        parsed = urlparse(url)
+        host = parsed.netloc.lower()
+
+        # Short youtu.be links: the id is the first path segment.
+        if 'youtu.be' in host:
+            first = [p for p in parsed.path.split('/') if p]
+            return first[0] if first else None
+
+        if 'youtube.com' in host or 'youtube-nocookie.com' in host:
+            # Classic watch?v=ID
+            v = parse_qs(parsed.query).get('v', [None])[0]
+            if v:
+                return v
+            # Path-based forms: /live/ID, /shorts/ID, /embed/ID, /v/ID
+            parts = [p for p in parsed.path.split('/') if p]
+            if len(parts) >= 2 and parts[0] in ('live', 'shorts', 'embed', 'v'):
+                return parts[1]
+
         return None
 
     def download(self, url):
