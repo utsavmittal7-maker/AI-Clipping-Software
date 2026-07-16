@@ -15,7 +15,9 @@ class GeminiSelector:
         """
         self.api_key = api_key
         genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel('gemini-2.5-flash')
+        # Use the "-latest" alias so the app keeps working as Google retires
+        # specific model versions (older pinned names 404 for new API keys).
+        self.model = genai.GenerativeModel('gemini-flash-latest')
 
     def select_clips(self, segments, video_duration, n, min_dur, max_dur):
         """
@@ -121,31 +123,35 @@ Return ONLY valid JSON with EXACT timestamps from the transcript:
             return self._fallback_selection(segments, video_duration, n, min_dur, max_dur)
 
     def _fallback_selection(self, segments, video_duration, n, min_dur, max_dur):
+        # Start each fallback clip at a real segment boundary (so it begins on a
+        # sentence) but always give it a full min_dur..max_dur length. The old
+        # logic used a single segment's length, which produced sub-second clips.
         clips = []
-        used_segments = set()
-        
-        for i in range(n):
-            available_segments = [seg for j, seg in enumerate(segments) if j not in used_segments]
-            if not available_segments:
+        used_starts = set()
+        candidates = [
+            seg['start'] for seg in segments
+            if seg['start'] + min_dur <= video_duration
+        ]
+        random.shuffle(candidates)
+
+        for start in candidates:
+            if len(clips) >= n:
                 break
-                
-            segment = random.choice(available_segments)
-            seg_idx = segments.index(segment)
-            used_segments.add(seg_idx)
-            
-            start = segment['start']
-            duration = min(max_dur, segment['end'] - start)
-            if duration < min_dur and seg_idx + 1 < len(segments):
-                next_seg = segments[seg_idx + 1]
-                duration = min(max_dur, next_seg['end'] - start)
-            
+            if start in used_starts:
+                continue
+            used_starts.add(start)
+
+            duration = min(max_dur, video_duration - start)
+            if duration < min_dur:
+                continue
+
             clips.append({
                 'start': start,
                 'end': start + duration,
-                'title': f'Fallback clip {i+1}',
+                'title': f'Fallback clip {len(clips) + 1}',
                 'virality_score': 50,
                 'hook_type': 'general',
                 'duration': duration
             })
-        
+
         return clips
