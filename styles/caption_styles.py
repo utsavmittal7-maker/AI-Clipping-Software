@@ -107,23 +107,78 @@ HIGHLIGHT_KEYWORDS = [
 
 # Map spoken words to an emoji that is drawn above the word. Keys are matched
 # case-insensitively against the word with surrounding punctuation stripped.
-# Keep this list broad but conservative so emojis feel relevant, not random.
+# The list is intentionally broad so emojis show up often - tune to taste.
 EMOJI_MAP = {
     # money / success
-    'money': '💰', 'cash': '💰', 'dollars': '💰', 'rich': '🤑', 'profit': '💰',
-    'free': '🆓', 'win': '🏆', 'winner': '🏆', 'won': '🏆', 'gold': '🥇',
-    # emphasis / reactions
-    'fire': '🔥', 'lit': '🔥', 'insane': '🤯', 'crazy': '🤯', 'mind': '🤯',
-    'shocking': '😱', 'shocked': '😱', 'wow': '😮', 'omg': '😱',
-    'love': '❤️', 'heart': '❤️', 'amazing': '🤩', 'incredible': '🤩',
-    'best': '🔥', 'perfect': '👌', 'genius': '🧠', 'smart': '🧠', 'brain': '🧠',
-    'laugh': '😂', 'funny': '😂', 'lol': '😂', 'hilarious': '😂',
-    # actions / topics
-    'secret': '🤫', 'stop': '✋', 'wait': '✋', 'listen': '👂', 'look': '👀',
-    'watch': '👀', 'see': '👀', 'time': '⏰', 'fast': '⚡', 'quick': '⚡',
-    'power': '💪', 'strong': '💪', 'work': '💼', 'idea': '💡', 'think': '💡',
-    'yes': '✅', 'no': '❌', 'wrong': '❌', 'right': '✅', 'true': '✅',
-    'food': '🍔', 'eat': '🍔', 'game': '🎮', 'music': '🎵', 'phone': '📱',
-    'up': '📈', 'growth': '📈', 'down': '📉', 'car': '🚗', 'world': '🌍',
-    'king': '👑', 'queen': '👑', 'star': '⭐', 'boom': '💥',
+    'money': '💰', 'cash': '💰', 'dollars': '💰', 'dollar': '💰', 'rich': '🤑',
+    'profit': '💰', 'paid': '💸', 'pay': '💸', 'bank': '🏦', 'broke': '📉',
+    'free': '🆓', 'win': '🏆', 'winner': '🏆', 'won': '🏆', 'winning': '🏆',
+    'gold': '🥇', 'diamond': '💎', 'expensive': '💸', 'millionaire': '🤑',
+    'million': '💰', 'billion': '🤑', 'thousand': '💵', 'hundred': '💯',
+
+    # hype / emphasis / reactions
+    'fire': '🔥', 'lit': '🔥', 'flames': '🔥', 'heat': '🔥', 'goated': '🐐',
+    'goat': '🐐', 'insane': '🤯', 'crazy': '🤯', 'mind': '🤯', 'unreal': '🤯',
+    'wild': '🤯', 'nuts': '🤯', 'shocking': '😱', 'shocked': '😱', 'wow': '😮',
+    'omg': '😱', 'bruh': '💀', 'dead': '💀', 'dying': '💀', 'died': '💀',
+    'rip': '💀', 'skull': '💀', 'sheesh': '🥶', 'cold': '🥶', 'freezing': '🥶',
+    'sus': '🤨', 'suspicious': '🤨', 'cap': '🧢', 'lying': '🧢', 'lie': '🧢',
+    'facts': '💯', 'fact': '💯', 'real': '💯', 'truth': '💯', 'true': '✅',
+    'slay': '💅', 'vibe': '😌', 'vibes': '😌', 'based': '😤', 'rizz': '😏',
+    'clean': '✨', 'magic': '✨', 'sparkle': '✨', 'shiny': '✨',
+
+    # love / feelings
+    'love': '❤️', 'heart': '❤️', 'crush': '😍', 'cute': '🥰', 'kiss': '😘',
+    'amazing': '🤩', 'incredible': '🤩', 'beautiful': '😍', 'gorgeous': '😍',
+    'best': '🔥', 'perfect': '👌', 'nice': '👌', 'clutch': '🎯',
+    'happy': '😄', 'excited': '🤩', 'hype': '🥳', 'hyped': '🥳', 'party': '🥳',
+    'sad': '😢', 'cry': '😭', 'crying': '😭', 'tears': '😭', 'hurt': '😣',
+    'angry': '😡', 'mad': '😡', 'rage': '😡', 'furious': '🤬', 'annoyed': '😤',
+    'scared': '😨', 'scary': '😱', 'creepy': '👻', 'ghost': '👻', 'fear': '😨',
+    'gross': '🤢', 'nasty': '🤢', 'disgusting': '🤮', 'ew': '🤢',
+    'cool': '😎', 'awesome': '😎', 'dope': '😎', 'boring': '😴', 'tired': '😴',
+    'sleep': '😴', 'shy': '😳', 'embarrassing': '😳', 'awkward': '😬',
+
+    # brains / smarts
+    'genius': '🧠', 'smart': '🧠', 'brain': '🧠', 'idea': '💡', 'think': '💡',
+    'thinking': '🤔', 'confused': '😵', 'question': '❓', 'why': '❓', 'how': '❓',
+
+    # laughter
+    'laugh': '😂', 'funny': '😂', 'lol': '😂', 'lmao': '😂', 'hilarious': '😂',
+    'joke': '😂', 'comedy': '😂',
+
+    # actions / attention
+    'secret': '🤫', 'quiet': '🤫', 'stop': '✋', 'wait': '✋', 'hold': '✋',
+    'listen': '👂', 'hear': '👂', 'look': '👀', 'watch': '👀', 'see': '👀',
+    'eyes': '👀', 'point': '👉', 'clap': '👏', 'wave': '👋', 'pray': '🙏',
+    'please': '🙏', 'thanks': '🙏', 'ok': '👍', 'okay': '👍', 'yes': '✅',
+    'good': '👍', 'no': '❌', 'wrong': '❌', 'bad': '👎', 'never': '🚫',
+    'right': '✅', 'correct': '✅', 'done': '✅', 'finished': '🏁',
+
+    # power / effort
+    'power': '💪', 'strong': '💪', 'muscle': '💪', 'gym': '💪', 'work': '💼',
+    'grind': '💪', 'fight': '🥊', 'punch': '🥊', 'boxing': '🥊', 'kick': '🦵',
+
+    # speed / time
+    'time': '⏰', 'clock': '⏰', 'late': '⏰', 'fast': '⚡', 'quick': '⚡',
+    'speed': '⚡', 'zoom': '💨', 'run': '🏃', 'running': '🏃',
+
+    # tech / gaming / stream
+    'game': '🎮', 'gaming': '🎮', 'gamer': '🎮', 'play': '🎮', 'stream': '📺',
+    'streamer': '📺', 'live': '🔴', 'twitch': '🟣', 'youtube': '▶️',
+    'subscribe': '🔔', 'follow': '➕', 'like': '👍', 'chat': '💬', 'clip': '🎬',
+    'phone': '📱', 'computer': '💻', 'internet': '🌐', 'music': '🎵',
+    'song': '🎵', 'dance': '🕺', 'camera': '📸', 'video': '🎥',
+
+    # numbers / trends
+    'up': '📈', 'growth': '📈', 'rising': '📈', 'down': '📉', 'first': '🥇',
+    'number': '🔢', 'level': '🆙', 'boom': '💥', 'explode': '💥', 'bomb': '💣',
+
+    # world / people / things
+    'car': '🚗', 'cars': '🚗', 'world': '🌍', 'earth': '🌍', 'king': '👑',
+    'queen': '👑', 'star': '⭐', 'stars': '⭐', 'sun': '☀️', 'rain': '🌧️',
+    'snow': '❄️', 'food': '🍔', 'eat': '🍔', 'hungry': '🍔', 'pizza': '🍕',
+    'coffee': '☕', 'drink': '🥤', 'dog': '🐶', 'cat': '🐱', 'baby': '👶',
+    'girl': '👧', 'boy': '👦', 'birthday': '🎂', 'gift': '🎁', 'trophy': '🏆',
+    'crown': '👑', 'rocket': '🚀', 'gun': '🔫', 'sword': '⚔️', 'blood': '🩸',
 }
