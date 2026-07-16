@@ -40,6 +40,7 @@ def generate_random_clips(duration, num_clips, min_duration, max_duration):
             'title': f'Random clip {i+1}',
             'virality_score': 30,
             'hook_type': 'general',
-            'duration': clip_duration
+            'duration': clip_duration,
+            'description': '🔥 Wild stream moment 😳 you had to be there 👀 #shorts #fyp #viral #twitch #clips'
         })
     return clips

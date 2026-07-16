@@ -26,7 +26,8 @@ class YouTubeDownloader:
                                        Defaults to TEMP_DIR from config.
         """
         self.temp_dir = temp_dir
-        
+        self.video_author = ""
+
     def _sanitize_filename(self, filename):
         """
         Sanitizes a filename by removing invalid characters.
@@ -108,6 +109,10 @@ class YouTubeDownloader:
             # Get video information and sanitize title
             title = self._sanitize_filename(yt.title)
             duration = yt.length
+            try:
+                self.video_author = yt.author or ""
+            except Exception:
+                self.video_author = ""
             
             print(f"Video title: {title}")
             print(f"Video duration: {duration} seconds ({duration//60}m {duration%60}s)")
