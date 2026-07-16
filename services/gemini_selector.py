@@ -15,7 +15,7 @@ class GeminiSelector:
         """
         self.api_key = api_key
         genai.configure(api_key=self.api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-2.5-flash')
 
     def select_clips(self, segments, video_duration, n, min_dur, max_dur):
         """
