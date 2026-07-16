@@ -1,12 +1,18 @@
 from pathlib import Path
 from moviepy.editor import VideoFileClip
 
-from config import OUTPUT_DIR, TEMP_DIR, GEMINI_API_KEY
+from config import (
+    OUTPUT_DIR, TEMP_DIR, GEMINI_API_KEY,
+    AUTO_CLEANUP, REVIEW_CLIPS, GENERATE_THUMBNAILS, GENERATE_SUMMARY,
+    SILENCE_GAP, SILENCE_KEEP, MUSIC_PATH, MUSIC_VOLUME, LOGO_PATH,
+    INTRO_PATH, OUTRO_PATH,
+)
 from services.youtube_downloader import YouTubeDownloader
 from services.whisper_transcriber import WhisperSingleton
 from services.gemini_selector import GeminiSelector
 from services.face_tracker import FaceTracker
 from services.caption_maker import CaptionMaker
+from services import editor
 from utils.helpers import generate_random_clips, cleanup_temp_files
 
 
@@ -32,7 +38,7 @@ class VideoProcessor:
         self.face_tracker = FaceTracker()
         self.caption_maker = CaptionMaker(caption_style)
 
-    def process_video(self, url, num_clips, min_duration, max_duration):
+    def process_video(self, url, num_clips, min_duration, max_duration, review=None):
         """
         Processes a YouTube video to generate viral clips.
 
@@ -71,6 +77,31 @@ class VideoProcessor:
         if not clip_specs:
             raise ValueError("Could not select any clips from the video.")
 
+        # Optional: let the user trim / drop clips before rendering.
+        do_review = REVIEW_CLIPS if review is None else review
+        if do_review:
+            clip_specs = editor.interactive_review(clip_specs, duration)
+            if not clip_specs:
+                print("🛑 No clips left after review - nothing to render.")
+                self.face_tracker.close()
+                cleanup_temp_files()
+                return [], title
+
+        # Optional: whole-video summary saved alongside the clips.
+        if GENERATE_SUMMARY and segments:
+            summary = self.ai_selector.summarize(segments, video_title=title)
+            if summary:
+                summary_path = OUTPUT_DIR / f"{Path(video_path).stem}_summary.txt"
+                try:
+                    with open(summary_path, 'w', encoding='utf-8') as fh:
+                        fh.write(summary + "\n")
+                    print(f"📝 Video summary saved to: {summary_path.name}")
+                except Exception as e:
+                    print(f"⚠️ Could not save summary: {e}")
+
+        thumb_font = (self.caption_maker.font_paths.get('bold')
+                      or self.caption_maker.font_paths.get('impact'))
+
         output_files = []
         print(f"\n🎬 Processing {len(clip_specs)} viral clips...")
 
@@ -89,21 +120,52 @@ class VideoProcessor:
                 with VideoFileClip(str(video_path)) as video:
                     clip = video.subclip(start, end)
 
+                    # Words relative to this subclip (0-based) for cleanup + captions.
+                    words_rel = []
+                    for w in (words or []):
+                        ws, we = w['start'] - start, w['end'] - start
+                        if we <= 0 or ws >= clip.duration:
+                            continue
+                        words_rel.append({'word': w['word'],
+                                          'start': max(0.0, ws),
+                                          'end': min(clip.duration, we)})
+
+                    # Auto-cleanup: remove fillers + long silences.
+                    if AUTO_CLEANUP and words_rel:
+                        print("    🧹 Auto-cleanup (removing fillers & silences)...")
+                        clip, words_rel, removed = editor.auto_cleanup(
+                            clip, words_rel, silence_gap=SILENCE_GAP,
+                            silence_keep=SILENCE_KEEP)
+                        print(f"    ✅ Tightened clip by {removed:.1f}s"
+                              if removed > 0.3 else "    ✅ Nothing worth trimming")
+
                     print(f"    🎯 Applying intelligent face tracking...")
-                    print(f"    ⏳ Analyzing frames for face detection...")
                     clip = self.face_tracker.track_and_crop(clip)
                     print(f"    ✅ Face tracking and cropping complete")
 
-                    if words:
-                        print(f"    📝 Adding word-by-word captions...")
-                        clip = self.caption_maker.add_captions(clip, words, start)
+                    if words_rel:
+                        print(f"    📝 Adding captions...")
+                        clip = self.caption_maker.add_captions(clip, words_rel, 0.0)
+
+                    # Branding: logo/watermark + background music (both optional).
+                    clip = editor.add_logo(clip, LOGO_PATH)
+                    clip = editor.add_background_music(clip, MUSIC_PATH, MUSIC_VOLUME)
 
                     filename = f"clip_{i}_{virality_score}pts_{Path(video_path).stem}.mp4"
                     output_path = OUTPUT_DIR / filename
 
+                    # Cover image from the finished (captioned/branded) main clip.
+                    if GENERATE_THUMBNAILS:
+                        thumb_path = OUTPUT_DIR / f"{output_path.stem}_thumbnail.jpg"
+                        if editor.make_thumbnail(clip, title_text, str(thumb_path), thumb_font):
+                            print(f"    🖼️ Thumbnail saved: {thumb_path.name}")
+
+                    # Optional intro/outro wraps the final clip.
+                    final_clip = editor.add_intro_outro(clip, INTRO_PATH, OUTRO_PATH)
+
                     print(f"    🎥 Encoding with optimized settings...")
                     print(f"    ⏳ Starting video encoding (this may take a while)...")
-                    clip.write_videofile(
+                    final_clip.write_videofile(
                         str(output_path),
                         codec='libx264',
                         audio_codec='aac',
@@ -138,7 +200,7 @@ class VideoProcessor:
             except Exception as e:
                 print(f"    ❌ Error processing clip {i}: {e}")
                 continue
-        
+
         self.face_tracker.close()
         cleanup_temp_files()
 
