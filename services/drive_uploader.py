@@ -18,10 +18,11 @@ SCOPES = ['https://www.googleapis.com/auth/drive.file']
 
 class DriveUploader:
     def __init__(self, credentials_path='credentials.json', token_path='token.json',
-                 folder_id='', make_shareable=False):
+                 folder_id='', folder_name='', make_shareable=False):
         self.credentials_path = credentials_path
         self.token_path = token_path
         self.folder_id = (folder_id or '').strip()
+        self.folder_name = (folder_name or '').strip()
         self.make_shareable = make_shareable
         self.service = None
         self.enabled = False
@@ -68,10 +69,35 @@ class DriveUploader:
             self.service = build('drive', 'v3', credentials=creds)
             self.enabled = True
             print("✅ Connected to Google Drive")
+            # Resolve a target folder by name if no explicit id was given.
+            if not self.folder_id and self.folder_name:
+                self.folder_id = self._ensure_folder(self.folder_name)
             return True
         except Exception as e:
             print(f"⚠️ Could not connect to Google Drive: {e}. Clips kept locally.")
             return False
+
+    def _ensure_folder(self, name):
+        """Find (or create) an app-owned Drive folder by name; return its id."""
+        try:
+            safe = name.replace("\\", "\\\\").replace("'", "\\'")
+            query = ("mimeType='application/vnd.google-apps.folder' "
+                     f"and name='{safe}' and trashed=false")
+            found = self.service.files().list(
+                q=query, spaces='drive', fields='files(id, name)').execute()
+            files = found.get('files', [])
+            if files:
+                print(f"    📁 Uploading into existing Drive folder: {name}")
+                return files[0]['id']
+            folder = self.service.files().create(
+                body={'name': name,
+                      'mimeType': 'application/vnd.google-apps.folder'},
+                fields='id').execute()
+            print(f"    📁 Created Drive folder: {name}")
+            return folder['id']
+        except Exception as e:
+            print(f"    ⚠️ Could not create/find Drive folder '{name}': {e}")
+            return ''
 
     def upload(self, file_path):
         """Upload one file to Drive. Returns its view link, or None on failure."""

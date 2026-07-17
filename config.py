@@ -53,6 +53,11 @@ SILENCE_KEEP = _float('SILENCE_KEEP', 0.15)   # keep this much of a trimmed gap
 
 # --- Google Drive upload (optional) ---
 UPLOAD_TO_DRIVE = _flag('UPLOAD_TO_DRIVE', False)
+# Easiest way to organize uploads: the app creates/reuses a folder of this name
+# in your Drive and uploads clips into it. Works with the safe drive.file scope.
+DRIVE_FOLDER_NAME = os.getenv('DRIVE_FOLDER_NAME', '').strip()
+# Advanced: upload into an existing folder by its id (only reliable for folders
+# the app itself created). Leave blank to use DRIVE_FOLDER_NAME instead.
 DRIVE_FOLDER_ID = os.getenv('DRIVE_FOLDER_ID', '').strip()
 GOOGLE_CREDENTIALS_PATH = os.getenv('GOOGLE_CREDENTIALS_PATH', 'credentials.json').strip()
 DRIVE_TOKEN_PATH = os.getenv('DRIVE_TOKEN_PATH', 'token.json').strip()
