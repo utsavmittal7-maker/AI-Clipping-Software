@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from moviepy.editor import VideoFileClip
 
@@ -52,10 +53,19 @@ class VideoProcessor:
             tuple: A tuple containing a list of output file paths and the
                    title of the video.
         """
-        print("📥 Downloading video...")
-        video_path, title, duration = self.downloader.download(url)
-        author = getattr(self.downloader, 'video_author', '')
-        print(f"✅ Download complete: {title} ({duration:.1f}s)")
+        # Accept either a local video file or a URL to download.
+        if os.path.isfile(url):
+            from utils.helpers import get_video_duration
+            video_path = Path(url)
+            title = video_path.stem
+            author = ''
+            duration = get_video_duration(video_path)
+            print(f"📂 Using local video: {video_path.name} ({duration:.1f}s)")
+        else:
+            print("📥 Downloading video...")
+            video_path, title, duration = self.downloader.download(url)
+            author = getattr(self.downloader, 'video_author', '')
+            print(f"✅ Download complete: {title} ({duration:.1f}s)")
 
         print("🎵 Starting transcription with Whisper...")
         words, transcript, segments = self.transcriber.transcribe(video_path)

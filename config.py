@@ -15,6 +15,9 @@ load_dotenv()
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'YOUR_API_KEY_HERE')
 OUTPUT_DIR = Path(os.getenv('OUTPUT_DIR', './clips'))
 TEMP_DIR = Path(os.getenv('TEMP_DIR', './temp'))
+# Downloaded source videos are kept here so they can be re-clipped without
+# downloading again (delete them with the 'clear' option in the app).
+DOWNLOADS_DIR = Path(os.getenv('DOWNLOADS_DIR', './downloads'))
 # Whisper model size (options: tiny, base, small, medium, large-v2)
 # Using medium model for better performance while maintaining good accuracy
 WHISPER_MODEL = os.getenv('WHISPER_MODEL', 'medium')
@@ -58,6 +61,7 @@ OUTRO_PATH = os.getenv('OUTRO_PATH', '').strip()
 # Create directories
 OUTPUT_DIR.mkdir(exist_ok=True)
 TEMP_DIR.mkdir(exist_ok=True)
+DOWNLOADS_DIR.mkdir(exist_ok=True)
 
 if "YOUR_API_KEY_HERE" in GEMINI_API_KEY:
     print("⚠️ WARNING: Please replace 'YOUR_API_KEY_HERE' with your actual Google AI Studio API key in your .env file.")
