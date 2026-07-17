@@ -41,7 +41,8 @@ class VideoProcessor:
         self.face_tracker = FaceTracker()
         self.caption_maker = CaptionMaker(caption_style)
 
-    def process_video(self, url, num_clips, min_duration, max_duration, review=None):
+    def process_video(self, url, num_clips, min_duration, max_duration,
+                      review=None, upload=None):
         """
         Processes a YouTube video to generate viral clips.
 
@@ -115,8 +116,9 @@ class VideoProcessor:
                       or self.caption_maker.font_paths.get('impact'))
 
         # Optional: connect to Google Drive once (opens a browser on first auth).
+        do_upload = UPLOAD_TO_DRIVE if upload is None else upload
         uploader = None
-        if UPLOAD_TO_DRIVE:
+        if do_upload:
             from services.drive_uploader import DriveUploader
             uploader = DriveUploader(
                 credentials_path=GOOGLE_CREDENTIALS_PATH,

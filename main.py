@@ -174,6 +174,14 @@ def main(url=None):
             "✂️  Review & trim clips before rendering? (y/N): ").strip().lower()
         review = review_choice in ('y', 'yes')
 
+        save_choice = input(
+            "💾 Save clips to: (1) This PC  (2) Google Drive [1]: ").strip() or "1"
+        upload = save_choice == "2"
+        if upload:
+            log("☁️  Clips will be uploaded to Google Drive.")
+        else:
+            log("💻 Clips will be saved locally in the 'clips' folder.")
+
         log("\n" + "="*70)
         log("🎬 STARTING VIDEO PROCESSING...")
         log("="*70)
@@ -186,7 +194,7 @@ def main(url=None):
         time.sleep(0.5)
 
         outputs, title = processor.process_video(
-            url, num_clips, min_duration, max_duration, review=review)
+            url, num_clips, min_duration, max_duration, review=review, upload=upload)
 
         log("\n" + "="*70)
         log("🎉 VIRAL CLIPS GENERATED!")
