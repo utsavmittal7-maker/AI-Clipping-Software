@@ -14,6 +14,11 @@ google-generativeai>=0.7.0
 # --- Configuration ---
 python-dotenv>=1.0.0
 
+# --- Google Drive upload (optional feature) ---
+google-api-python-client>=2.100.0
+google-auth-httplib2>=0.2.0
+google-auth-oauthlib>=1.2.0
+
 # --- YouTube download (primary + fallback) ---
 pytubefix>=6.0.0
 yt-dlp>=2024.4.9
