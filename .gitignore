@@ -94,6 +94,10 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
+# Google Drive OAuth secrets
+credentials.json
+token.json
+
 # Environments
 .env
 .venv

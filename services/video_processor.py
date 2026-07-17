@@ -7,6 +7,8 @@ from config import (
     AUTO_CLEANUP, REVIEW_CLIPS, GENERATE_THUMBNAILS, GENERATE_SUMMARY,
     SILENCE_GAP, SILENCE_KEEP, MUSIC_PATH, MUSIC_VOLUME, LOGO_PATH,
     INTRO_PATH, OUTRO_PATH,
+    UPLOAD_TO_DRIVE, DRIVE_FOLDER_ID, GOOGLE_CREDENTIALS_PATH, DRIVE_TOKEN_PATH,
+    DELETE_AFTER_UPLOAD, DRIVE_MAKE_SHAREABLE,
 )
 from services.youtube_downloader import YouTubeDownloader
 from services.whisper_transcriber import WhisperSingleton
@@ -112,6 +114,18 @@ class VideoProcessor:
         thumb_font = (self.caption_maker.font_paths.get('bold')
                       or self.caption_maker.font_paths.get('impact'))
 
+        # Optional: connect to Google Drive once (opens a browser on first auth).
+        uploader = None
+        if UPLOAD_TO_DRIVE:
+            from services.drive_uploader import DriveUploader
+            uploader = DriveUploader(
+                credentials_path=GOOGLE_CREDENTIALS_PATH,
+                token_path=DRIVE_TOKEN_PATH,
+                folder_id=DRIVE_FOLDER_ID,
+                make_shareable=DRIVE_MAKE_SHAREABLE)
+            if not uploader.connect():
+                uploader = None
+
         output_files = []
         print(f"\n🎬 Processing {len(clip_specs)} viral clips...")
 
@@ -208,6 +222,23 @@ class VideoProcessor:
                         print(f"    💾 Saved title + description to: {desc_path.name}")
                     except Exception as write_err:
                         print(f"    ⚠️ Could not save title/description: {write_err}")
+
+                    # Optional: upload the clip (and its sidecars) to Google Drive.
+                    if uploader:
+                        link = uploader.upload(str(output_path))
+                        if link:
+                            print(f"    ☁️ Uploaded to Google Drive: {link}")
+                            thumb = OUTPUT_DIR / f"{output_path.stem}_thumbnail.jpg"
+                            if thumb.exists():
+                                uploader.upload(str(thumb))
+                            if desc_path.exists():
+                                uploader.upload(str(desc_path))
+                            if DELETE_AFTER_UPLOAD:
+                                try:
+                                    os.remove(output_path)
+                                    print("    🗑️ Removed local copy after upload")
+                                except OSError:
+                                    pass
 
             except Exception as e:
                 print(f"    ❌ Error processing clip {i}: {e}")

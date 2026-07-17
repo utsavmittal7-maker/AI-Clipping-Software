@@ -51,6 +51,16 @@ GENERATE_SUMMARY = _flag('GENERATE_SUMMARY', True)
 SILENCE_GAP = _float('SILENCE_GAP', 0.6)      # gap (s) longer than this is trimmed
 SILENCE_KEEP = _float('SILENCE_KEEP', 0.15)   # keep this much of a trimmed gap
 
+# --- Google Drive upload (optional) ---
+UPLOAD_TO_DRIVE = _flag('UPLOAD_TO_DRIVE', False)
+DRIVE_FOLDER_ID = os.getenv('DRIVE_FOLDER_ID', '').strip()
+GOOGLE_CREDENTIALS_PATH = os.getenv('GOOGLE_CREDENTIALS_PATH', 'credentials.json').strip()
+DRIVE_TOKEN_PATH = os.getenv('DRIVE_TOKEN_PATH', 'token.json').strip()
+# Delete the local clip after it uploads successfully (keeps a copy by default).
+DELETE_AFTER_UPLOAD = _flag('DELETE_AFTER_UPLOAD', False)
+# Make each uploaded clip shareable via link (anyone with the link can view).
+DRIVE_MAKE_SHAREABLE = _flag('DRIVE_MAKE_SHAREABLE', False)
+
 # --- Branding / music assets (optional; used only if the file exists) ---
 MUSIC_PATH = os.getenv('MUSIC_PATH', '').strip()
 MUSIC_VOLUME = _float('MUSIC_VOLUME', 0.12)   # 0.0-1.0, background music level
