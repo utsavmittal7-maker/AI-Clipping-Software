@@ -7,7 +7,7 @@ from urllib.parse import urlparse, parse_qs
 from pytubefix import YouTube
 from pytubefix.exceptions import PytubeFixError
 
-from config import TEMP_DIR, DOWNLOADS_DIR, YOUTUBE_USER_AGENT
+from config import TEMP_DIR, DOWNLOADS_DIR, MAX_RESOLUTION, YOUTUBE_USER_AGENT
 
 
 class YouTubeDownloader:
@@ -246,7 +246,7 @@ class YouTubeDownloader:
             video_streams = [
                 s for s in yt.streams.filter(
                     adaptive=True, only_video=True, file_extension='mp4')
-                if 0 < _res(s) <= 1080
+                if 0 < _res(s) <= MAX_RESOLUTION
             ]
             if not video_streams:
                 return None

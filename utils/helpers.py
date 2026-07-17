@@ -49,6 +49,10 @@ def clear_downloads(downloads_dir=DOWNLOADS_DIR):
             p.unlink()
             count += 1
             freed += size
+            # Remove the sibling cached transcript, if any.
+            cache = p.with_name(p.stem + '.transcript.json')
+            if cache.exists():
+                cache.unlink()
         except OSError as e:
             print(f"⚠️  Could not delete {p.name}: {e}")
     return count, freed

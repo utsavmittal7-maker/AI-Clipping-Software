@@ -1,14 +1,16 @@
 import os
+import json
 from pathlib import Path
 from moviepy.editor import VideoFileClip
 
 from config import (
-    OUTPUT_DIR, TEMP_DIR, GEMINI_API_KEY,
+    OUTPUT_DIR, TEMP_DIR, GEMINI_API_KEY, WHISPER_MODEL,
     AUTO_CLEANUP, REVIEW_CLIPS, GENERATE_THUMBNAILS, GENERATE_SUMMARY,
     SILENCE_GAP, SILENCE_KEEP, MUSIC_PATH, MUSIC_VOLUME, LOGO_PATH,
     INTRO_PATH, OUTRO_PATH,
     UPLOAD_TO_DRIVE, DRIVE_FOLDER_ID, DRIVE_FOLDER_NAME, GOOGLE_CREDENTIALS_PATH,
     DRIVE_TOKEN_PATH, DELETE_AFTER_UPLOAD, DRIVE_MAKE_SHAREABLE,
+    ENCODE_PRESET, ENCODE_THREADS, CACHE_TRANSCRIPTS,
 )
 from services.youtube_downloader import YouTubeDownloader
 from services.whisper_transcriber import WhisperSingleton
@@ -36,7 +38,8 @@ class VideoProcessor:
                                             Defaults to 'clean_white'.
         """
         self.downloader = YouTubeDownloader()
-        self.transcriber = WhisperSingleton()
+        # Loaded lazily - a cached transcript avoids loading the model at all.
+        self.transcriber = None
         self.ai_selector = GeminiSelector(api_key=GEMINI_API_KEY)
         self.face_tracker = FaceTracker()
         self.caption_maker = CaptionMaker(caption_style)
@@ -70,9 +73,35 @@ class VideoProcessor:
             author = getattr(self.downloader, 'video_author', '')
             print(f"✅ Download complete: {title} ({duration:.1f}s)")
 
-        print("🎵 Starting transcription with Whisper...")
-        words, transcript, segments = self.transcriber.transcribe(video_path)
-        print(f"✅ Transcription processing complete")
+        # Reuse a cached transcript if we already transcribed this exact video.
+        words, transcript, segments = None, None, None
+        cache_path = video_path.with_name(video_path.stem + '.transcript.json')
+        if CACHE_TRANSCRIPTS and cache_path.exists():
+            try:
+                data = json.loads(cache_path.read_text(encoding='utf-8'))
+                if data.get('model') == WHISPER_MODEL:
+                    words = data['words']
+                    transcript = data['transcript']
+                    segments = data['segments']
+                    print(f"♻️  Using cached transcript ({len(segments)} segments) "
+                          f"- skipping Whisper")
+            except Exception:
+                words = None
+
+        if words is None:
+            print("🎵 Starting transcription with Whisper...")
+            if self.transcriber is None:
+                self.transcriber = WhisperSingleton()
+            words, transcript, segments = self.transcriber.transcribe(video_path)
+            print(f"✅ Transcription processing complete")
+            if CACHE_TRANSCRIPTS and segments:
+                try:
+                    cache_path.write_text(json.dumps({
+                        'model': WHISPER_MODEL, 'words': words,
+                        'transcript': transcript, 'segments': segments}),
+                        encoding='utf-8')
+                except Exception:
+                    pass
 
         if not segments:
             print("❌ Transcription failed. Using random clips.")
@@ -192,21 +221,21 @@ class VideoProcessor:
 
                     print(f"    🎥 Encoding with optimized settings...")
                     print(f"    ⏳ Starting video encoding (this may take a while)...")
+                    enc_threads = ENCODE_THREADS or (os.cpu_count() or 4)
                     final_clip.write_videofile(
                         str(output_path),
                         codec='libx264',
                         audio_codec='aac',
                         audio_bitrate='192k',
-                        # 'medium' preset + CRF 18 gives noticeably crisper clips
-                        # than the old 'faster'/CRF 20 for a small speed cost.
-                        preset='medium',
-                        ffmpeg_params=['-crf', '18', '-pix_fmt', 'yuv420p', '-threads', '2'],
+                        # Preset (default 'veryfast') + CRF 20 keeps clips crisp
+                        # while encoding much faster; uses all CPU cores.
+                        preset=ENCODE_PRESET,
+                        ffmpeg_params=['-crf', '20', '-pix_fmt', 'yuv420p'],
                         verbose=True,  # Enable verbose output to show progress
                         logger=None,
                         temp_audiofile=str(TEMP_DIR / f'temp_audio_{i}.m4a'),
                         remove_temp=True,
-                        # Use 2 threads for encoding to avoid overloading the system
-                        threads=2
+                        threads=enc_threads
                     )
                     print(f"    ✅ Video encoding complete")
                     output_files.append(str(output_path))

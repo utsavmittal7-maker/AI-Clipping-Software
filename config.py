@@ -51,6 +51,24 @@ GENERATE_SUMMARY = _flag('GENERATE_SUMMARY', True)
 SILENCE_GAP = _float('SILENCE_GAP', 0.6)      # gap (s) longer than this is trimmed
 SILENCE_KEEP = _float('SILENCE_KEEP', 0.15)   # keep this much of a trimmed gap
 
+
+def _int(name, default):
+    try:
+        return int(os.getenv(name, default))
+    except (TypeError, ValueError):
+        return int(default)
+
+
+# --- Speed / performance ---
+# x264 preset: ultrafast..veryfast..medium..slow (faster = quicker, bigger file).
+ENCODE_PRESET = os.getenv('ENCODE_PRESET', 'veryfast').strip()
+# Encoder threads (0 = use all CPU cores).
+ENCODE_THREADS = _int('ENCODE_THREADS', 0)
+# Cap the downloaded resolution (e.g. 720 is much faster than 1080).
+MAX_RESOLUTION = _int('MAX_RESOLUTION', 1080)
+# Cache transcripts so re-clipping the same video skips transcription.
+CACHE_TRANSCRIPTS = _flag('CACHE_TRANSCRIPTS', True)
+
 # --- Google Drive upload (optional) ---
 UPLOAD_TO_DRIVE = _flag('UPLOAD_TO_DRIVE', False)
 # Easiest way to organize uploads: the app creates/reuses a folder of this name
