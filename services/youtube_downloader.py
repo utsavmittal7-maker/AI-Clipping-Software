@@ -7,7 +7,7 @@ from urllib.parse import urlparse, parse_qs
 from pytubefix import YouTube
 from pytubefix.exceptions import PytubeFixError
 
-from config import TEMP_DIR, YOUTUBE_USER_AGENT
+from config import TEMP_DIR, DOWNLOADS_DIR, YOUTUBE_USER_AGENT
 
 
 class YouTubeDownloader:
@@ -17,15 +17,17 @@ class YouTubeDownloader:
     This class uses the pytubefix library to download a YouTube video
     and prepares it for further processing.
     """
-    def __init__(self, temp_dir=TEMP_DIR):
+    def __init__(self, temp_dir=TEMP_DIR, downloads_dir=DOWNLOADS_DIR):
         """
         Initializes the YouTubeDownloader.
 
         Args:
-            temp_dir (Path, optional): The directory to save temporary files.
-                                       Defaults to TEMP_DIR from config.
+            temp_dir (Path, optional): Directory for transient intermediate files.
+            downloads_dir (Path, optional): Directory where finished source
+                                            videos are kept (persisted for reuse).
         """
         self.temp_dir = temp_dir
+        self.downloads_dir = downloads_dir
         self.video_author = ""
 
     def _sanitize_filename(self, filename):
@@ -108,13 +110,29 @@ class YouTubeDownloader:
             raise ValueError("Invalid YouTube URL provided.")
         print(f"✅ Extracted video ID: {video_id}")
 
-        # Ensure temp directory exists
+        # Ensure directories exist
         os.makedirs(self.temp_dir, exist_ok=True)
-        print(f"✅ Temporary directory ready: {self.temp_dir}")
-        
-        # Set up output path - use absolute path to avoid any path issues
-        output_path = os.path.abspath(str(self.temp_dir))
+        os.makedirs(self.downloads_dir, exist_ok=True)
+
+        # Save the finished source video into the persistent downloads folder so
+        # it can be re-clipped later without downloading again.
+        output_path = os.path.abspath(str(self.downloads_dir))
         output_filename = f"{video_id}.mp4"
+
+        # If we already downloaded this video before, reuse it (no re-download).
+        existing = os.path.join(output_path, output_filename)
+        if os.path.exists(existing) and os.path.getsize(existing) > 0:
+            print(f"♻️  Reusing already-downloaded video: {output_filename}")
+            from utils.helpers import get_video_duration
+            duration = get_video_duration(existing)
+            title = video_id
+            try:
+                yt = YouTube(url)
+                title = self._sanitize_filename(yt.title)
+                self.video_author = yt.author or ""
+            except Exception:
+                pass
+            return Path(existing), title, duration
         print(f"📂 Output will be saved to: {os.path.join(output_path, output_filename)}")
         
         try:

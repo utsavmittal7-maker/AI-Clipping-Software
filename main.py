@@ -47,8 +47,71 @@ def validate_youtube_url(url):
     # Check if it's a YouTube domain
     if not ('youtube.com' in parsed.netloc or 'youtu.be' in parsed.netloc):
         return False
-        
+
     return True
+
+
+def resolve_source(raw):
+    """
+    Turn raw user input into a usable source. Handles:
+      - 'clear'  -> delete all downloaded videos, then abort this run
+      - 'list'   -> pick from already-downloaded videos
+      - a local video file path
+      - a YouTube URL
+
+    Returns the resolved source string, or None to abort.
+    """
+    from utils.helpers import list_downloaded_videos, clear_downloads
+
+    raw = (raw or "").strip().strip('"').strip("'")
+    if not raw:
+        log("❌ Error: Nothing entered.")
+        return None
+    low = raw.lower()
+
+    if low == 'clear':
+        vids = list_downloaded_videos()
+        if not vids:
+            log("📁 No downloaded videos to delete.")
+            return None
+        confirm = input(
+            f"🗑️  Delete ALL {len(vids)} downloaded video(s)? (y/N): ").strip().lower()
+        if confirm in ('y', 'yes'):
+            count, freed = clear_downloads()
+            log(f"✅ Deleted {count} video(s), freed {freed/(1024*1024):.1f} MB.")
+        else:
+            log("Cancelled - nothing deleted.")
+        return None
+
+    if low == 'list':
+        vids = list_downloaded_videos()
+        if not vids:
+            log("📁 No downloaded videos yet. Paste a YouTube URL to download one.")
+            return None
+        log("\n📂 Already-downloaded videos:")
+        for i, p in enumerate(vids, 1):
+            log(f"  {i}. {p.name} ({p.stat().st_size/(1024*1024):.1f} MB)")
+        choice = input(f"🎯 Select a video to clip (1-{len(vids)}): ").strip()
+        try:
+            idx = int(choice) - 1
+            if 0 <= idx < len(vids):
+                return str(vids[idx])
+        except ValueError:
+            pass
+        log("❌ Invalid selection.")
+        return None
+
+    # A local video file the user pointed us at.
+    if os.path.isfile(raw):
+        return raw
+
+    # Otherwise treat it as a YouTube URL.
+    if validate_youtube_url(raw):
+        return raw
+
+    log("❌ Error: Not a valid YouTube URL or an existing local video file.")
+    return None
+
 
 def main(url=None):
     """
@@ -69,15 +132,16 @@ def main(url=None):
     log(f"📁 Temp directory: {TEMP_DIR}")
 
     if not url:
-        url = input("🔗 Enter YouTube URL: ").strip()
-    if not url:
-        log("❌ Error: No URL provided.")
+        log("🔗 Enter a YouTube URL, or the path to a local video file.")
+        log("   • type 'list'  to clip from an already-downloaded video")
+        log("   • type 'clear' to delete all downloaded videos")
+        url = input("👉 ").strip()
+
+    # Resolve URL / local path / 'list' / 'clear' into a usable source.
+    source = resolve_source(url)
+    if not source:
         return
-        
-    # Validate URL
-    if not validate_youtube_url(url):
-        log("❌ Error: Invalid YouTube URL. Please provide a valid YouTube URL.")
-        return
+    url = source
 
     try:
         num_clips = int(input("📊 Number of viral clips [3]: ") or "3")
@@ -154,13 +218,9 @@ def main(url=None):
 
 if __name__ == "__main__":
     try:
-        # Check if URL was provided as command-line argument
-        url = None
-        if len(sys.argv) > 1:
-            url = sys.argv[1].strip()
-            # Basic URL validation
-            if not url.startswith('http'):
-                url = 'https://' + url
+        # Check if a URL / path was provided as a command-line argument.
+        # resolve_source() handles URLs, local file paths, and 'list'/'clear'.
+        url = sys.argv[1].strip() if len(sys.argv) > 1 else None
         
         # Create necessary directories
         os.makedirs(OUTPUT_DIR, exist_ok=True)

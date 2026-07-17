@@ -133,6 +133,8 @@ cython_debug/
 # Temporary files
 temp/
 temp_files/
+downloads/
+clips/
 *.mp4
 *.m4a
 *.txt
