@@ -131,16 +131,20 @@ def main(url=None):
     log(f"📁 Output directory: {OUTPUT_DIR}")
     log(f"📁 Temp directory: {TEMP_DIR}")
 
-    if not url:
+    # Resolve the source. Keep asking until we get a valid URL / local file so a
+    # stray 'list'/'clear'/typo never drops the user back to the shell.
+    source = resolve_source(url) if url else None
+    if not source:
         log("🔗 Enter a YouTube URL, or the path to a local video file.")
         log("   • type 'list'  to clip from an already-downloaded video")
         log("   • type 'clear' to delete all downloaded videos")
-        url = input("👉 ").strip()
-
-    # Resolve URL / local path / 'list' / 'clear' into a usable source.
-    source = resolve_source(url)
-    if not source:
-        return
+        log("   • type 'quit'  to exit")
+        while not source:
+            raw = input("👉 ").strip()
+            if raw.lower() in ('quit', 'exit', 'q'):
+                log("👋 Exiting.")
+                return
+            source = resolve_source(raw)
     url = source
 
     try:
