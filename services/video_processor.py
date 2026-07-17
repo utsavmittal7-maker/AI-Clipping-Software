@@ -7,8 +7,8 @@ from config import (
     AUTO_CLEANUP, REVIEW_CLIPS, GENERATE_THUMBNAILS, GENERATE_SUMMARY,
     SILENCE_GAP, SILENCE_KEEP, MUSIC_PATH, MUSIC_VOLUME, LOGO_PATH,
     INTRO_PATH, OUTRO_PATH,
-    UPLOAD_TO_DRIVE, DRIVE_FOLDER_ID, GOOGLE_CREDENTIALS_PATH, DRIVE_TOKEN_PATH,
-    DELETE_AFTER_UPLOAD, DRIVE_MAKE_SHAREABLE,
+    UPLOAD_TO_DRIVE, DRIVE_FOLDER_ID, DRIVE_FOLDER_NAME, GOOGLE_CREDENTIALS_PATH,
+    DRIVE_TOKEN_PATH, DELETE_AFTER_UPLOAD, DRIVE_MAKE_SHAREABLE,
 )
 from services.youtube_downloader import YouTubeDownloader
 from services.whisper_transcriber import WhisperSingleton
@@ -122,6 +122,7 @@ class VideoProcessor:
                 credentials_path=GOOGLE_CREDENTIALS_PATH,
                 token_path=DRIVE_TOKEN_PATH,
                 folder_id=DRIVE_FOLDER_ID,
+                folder_name=DRIVE_FOLDER_NAME,
                 make_shareable=DRIVE_MAKE_SHAREABLE)
             if not uploader.connect():
                 uploader = None
